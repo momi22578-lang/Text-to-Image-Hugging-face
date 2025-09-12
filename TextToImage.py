@@ -1,175 +1,152 @@
 #!/usr/bin/env python3
 """
-Text-to-Image generation using Hugging Face InferenceClient
-Fixed version with proper image handling
+Text-to-Image generation helper functions using Hugging Face InferenceClient
+This module provides the core functionality for image generation
 """
 
 import os
-from dotenv import find_dotenv, load_dotenv
+from datetime import datetime
 from huggingface_hub import InferenceClient
 from PIL import Image
-from datetime import datetime
-
-# Load environment variables
-load_dotenv(find_dotenv())
-
-# Hugging Face API token
-API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+import streamlit as st
 
 # Available text-to-image models (free for inference API)
 MODELS = {
-    "1": "black-forest-labs/FLUX.1-schnell",  # Apache 2.0 license - fully free
-    "2": "runwayml/stable-diffusion-v1-5",
-    "3": "stabilityai/stable-diffusion-2-1", 
-    "4": "CompVis/stable-diffusion-v1-4",
-    "5": "prompthero/openjourney-v4",
-    "6": "black-forest-labs/FLUX.1-dev"  # Non-commercial license
+    "FLUX.1-schnell": "black-forest-labs/FLUX.1-schnell",  # Apache 2.0 license - fully free
+    "Stable Diffusion v1.5": "runwayml/stable-diffusion-v1-5",
+    "Stable Diffusion v2.1": "stabilityai/stable-diffusion-2-1", 
+    "Stable Diffusion v1.4": "CompVis/stable-diffusion-v1-4",
+    "OpenJourney v4": "prompthero/openjourney-v4",
+    "FLUX.1-dev": "black-forest-labs/FLUX.1-dev"  # Non-commercial license
 }
 
-def generate_image(prompt, model_id="black-forest-labs/FLUX.1-schnell"):
-    """
-    Generate image using Hugging Face InferenceClient
-    Simplified version with better error handling
-    """
-    try:
-        print(f"🎨 Generating with model: {model_id}")
-        print(f"📝 Prompt: '{prompt}'")
-        print("⏳ Please wait...")
+# Model information for display
+MODEL_INFO = {
+    "black-forest-labs/FLUX.1-schnell": {
+        "license": "Apache 2.0",
+        "status": "✅ Fully Free",
+        "description": "Fast generation with high quality"
+    },
+    "runwayml/stable-diffusion-v1-5": {
+        "license": "CreativeML Open RAIL-M",
+        "status": "✅ Generally Free",
+        "description": "Most tested and reliable model"
+    },
+    "stabilityai/stable-diffusion-2-1": {
+        "license": "CreativeML Open RAIL-M", 
+        "status": "✅ Generally Free",
+        "description": "Enhanced version with better prompt understanding"
+    },
+    "CompVis/stable-diffusion-v1-4": {
+        "license": "CreativeML Open RAIL-M",
+        "status": "✅ Generally Free", 
+        "description": "Original stable diffusion model"
+    },
+    "prompthero/openjourney-v4": {
+        "license": "CreativeML Open RAIL-M",
+        "status": "✅ Free for most uses",
+        "description": "Great for artistic and stylized images"
+    },
+    "black-forest-labs/FLUX.1-dev": {
+        "license": "Non-commercial",
+        "status": "⚠️ Personal Use Only",
+        "description": "Premium quality, slower generation"
+    }
+}
+
+class ImageGenerator:
+    """Text-to-image generator using Hugging Face models"""
+    
+    def __init__(self, api_token: str, output_dir: str = "./generated_images"):
+        """
+        Initialize the image generator
         
-        # Initialize client for each request to avoid issues
-        client = InferenceClient(api_key=API_TOKEN)
+        Args:
+            api_token (str): Hugging Face API token
+            output_dir (str): Directory to save generated images
+        """
+        self.api_token = api_token
+        self.output_dir = output_dir
+        self.client = None
         
-        # Use the simplest possible call
-        image = client.text_to_image(prompt, model=model_id)
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
         
-        print(f"✅ Generated image type: {type(image)}")
+    def _get_client(self):
+        """Get or create HuggingFace client"""
+        if self.client is None:
+            self.client = InferenceClient(api_key=self.api_token)
+        return self.client
+    
+    def generate_image(self, prompt: str, model_id: str) -> tuple[bool, str, Image.Image]:
+        """
+        Generate image from text prompt
         
-        # Save immediately to avoid conversion issues
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        clean_prompt = "".join(c for c in prompt[:20] if c.isalnum() or c in (' ', '-', '_')).strip()
-        filename = f"img_{timestamp}_{clean_prompt.replace(' ', '_')}.png"
-        
-        # Direct save - let PIL handle the format
-        image.save(filename)
-        
-        print(f"💾 Saved: {filename}")
-        print(f"📏 Size: {image.size}")
-        print(f"🎨 Mode: {image.mode}")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ Generation failed: {str(e)}")
-        print(f"🔍 Error type: {type(e).__name__}")
-        
-        # Try alternative approach with different client initialization
+        Args:
+            prompt (str): Text description for image generation
+            model_id (str): Model ID to use for generation
+            
+        Returns:
+            tuple: (success: bool, message: str, image: PIL.Image or None)
+        """
         try:
-            print("🔄 Trying alternative approach...")
-            alt_client = InferenceClient()
-            alt_client.token = API_TOKEN
+            client = self._get_client()
             
-            image = alt_client.text_to_image(prompt)
+            # Generate image
+            image = client.text_to_image(prompt, model=model_id)
             
+            # Create filename
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = os.path.join(OUTPUT_DIR, f"img_alt_{timestamp}.png")
-            image.save(filename)
+            clean_prompt = "".join(c for c in prompt[:20] if c.isalnum() or c in (' ', '-', '_')).strip()
+            filename = f"img_{timestamp}_{clean_prompt.replace(' ', '_')}.png"
+            filepath = os.path.join(self.output_dir, filename)
             
-            print(f"✅ Alternative method worked! Saved: {filename}")
-            return True
+            # Save image
+            image.save(filepath)
             
-        except Exception as e2:
-            print(f"❌ Alternative also failed: {str(e2)}")
-            return False
+            success_message = f"✅ Image generated successfully!\n📁 Saved as: {filename}\n📏 Size: {image.size}"
+            return True, success_message, image
+            
+        except Exception as e:
+            error_message = f"❌ Generation failed: {str(e)}"
+            return False, error_message, None
+    
+    def get_model_info(self, model_id: str) -> dict:
+        """Get information about a specific model"""
+        return MODEL_INFO.get(model_id, {
+            "license": "Unknown",
+            "status": "❓ Check model page",
+            "description": "No information available"
+        })
 
-def display_models():
-    """Display available models with licensing info"""
-    print("\n📋 Available Models:")
-    print("=" * 60)
-    for key, model in MODELS.items():
-        license_info = ""
-        if "schnell" in model:
-            license_info = " (✅ Fully Free - Apache 2.0)"
-        elif "FLUX.1-dev" in model:
-            license_info = " (⚠️ Non-commercial license)"
-        elif "stable-diffusion" in model:
-            license_info = " (✅ Generally free)"
-        elif "openjourney" in model:
-            license_info = " (✅ Free for most uses)"
-            
-        print(f"{key}. {model}{license_info}")
-    print("=" * 60)
+def validate_api_token(api_token: str) -> bool:
+    """
+    Validate if the API token is set and not empty
+    
+    Args:
+        api_token (str): API token to validate
+        
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    return api_token is not None and api_token.strip() != ""
 
-def main():
-    """Main text-to-image generation loop"""
-    
-    if not API_TOKEN:
-        print("❌ Error: HUGGINGFACEHUB_API_TOKEN not found!")
-        print("Please set your Hugging Face API token in your .env file")
-        print("Get it from: https://huggingface.co/settings/tokens")
-        return
-    
-    print("🎨 Simple Text-to-Image Generator")
-    print("=" * 50)
-    print("Commands: 'models', 'examples', 'exit'")
-    
-    # Start with the most reliable free model
-    current_model = MODELS["1"]  # FLUX.1-schnell
-    generation_count = 0
-    
-    # Example prompts
-    examples = [
-        "a red sports car on a mountain road",
-        "a cute robot in a garden",
-        "a sunset over the ocean",
-        "a cozy coffee shop",
-        "a space astronaut floating",
-        "a magical forest with glowing lights"
+def get_example_prompts() -> list[str]:
+    """Get a list of example prompts for inspiration"""
+    return [
+        "a red sports car on a mountain road at sunset",
+        "a cute robot reading a book in a cozy library",
+        "a magical forest with glowing mushrooms and fireflies",
+        "a cyberpunk city street with neon lights at night",
+        "a peaceful zen garden with koi pond and cherry blossoms",
+        "a space astronaut floating among colorful nebulae",
+        "a steampunk airship flying over Victorian London",
+        "a dragon perched on a castle tower during a thunderstorm"
     ]
-    
-    while True:
-        print(f"\n🤖 Current model: {current_model}")
-        user_input = input("Enter prompt (or command): ").strip()
-        
-        if user_input.lower() == "exit":
-            print(f"👋 Goodbye! Generated {generation_count} images.")
-            break
-            
-        elif user_input.lower() == "models":
-            display_models()
-            choice = input("Select model (1-6): ").strip()
-            if choice in MODELS:
-                current_model = MODELS[choice]
-                print(f"✅ Switched to: {current_model}")
-            continue
-            
-        elif user_input.lower() == "examples":
-            print("\n🌟 Example prompts:")
-            for i, ex in enumerate(examples, 1):
-                print(f"{i}. {ex}")
-            
-            try:
-                choice = input("Select example (1-6) or Enter to skip: ").strip()
-                if choice.isdigit() and 1 <= int(choice) <= 6:
-                    user_input = examples[int(choice) - 1]
-                    print(f"Selected: {user_input}")
-                else:
-                    continue
-            except:
-                continue
-        
-        if not user_input or user_input.lower() in ["models", "examples", "exit"]:
-            continue
-            
-        # Generate image
-        success = generate_image(user_input, current_model)
-        if success:
-            generation_count += 1
-            print(f"🎉 Total generated: {generation_count}")
-        else:
-            print("💡 Try a different model or simpler prompt")
 
-if __name__ == "__main__":
-    print("📦 Required packages: huggingface_hub python-dotenv pillow")
-    print("📄 Make sure you have a .env file with: HUGGINGFACEHUB_API_TOKEN=your_token")
-    print()
-    main()
+def get_model_display_name(model_id: str) -> str:
+    """Get display name for a model ID"""
+    for display_name, id_value in MODELS.items():
+        if id_value == model_id:
+            return display_name
+    return model_id
