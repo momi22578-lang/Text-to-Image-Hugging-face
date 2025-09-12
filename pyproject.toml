@@ -6,7 +6,7 @@ authors = [
     {name = "sai venkat", email = "saisam346@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.8,<4.0"
+requires-python = ">=3.9,!=3.9.7,<4.0"
 dependencies = [
     "langchain>=0.3.27,<0.4.0",
     "langchain-community>=0.3.29,<0.4.0",
