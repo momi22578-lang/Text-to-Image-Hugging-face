@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Streamlit Web UI for Text-to-Image Generation
+Streamlit Web UI for Text-to-Image Generation with Download Capability
 """
 
 import streamlit as st
 import os
+import io
+from datetime import datetime
 from dotenv import load_dotenv
 from TextToImage import ImageGenerator, MODELS, MODEL_INFO, validate_api_token, get_example_prompts
 
@@ -58,6 +60,14 @@ st.markdown("""
         color: #dc3545;
         font-weight: bold;
     }
+    
+    .download-section {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -67,6 +77,27 @@ def initialize_session_state():
         st.session_state.generated_images = []
     if 'generation_count' not in st.session_state:
         st.session_state.generation_count = 0
+
+def image_to_bytes(image, format="PNG"):
+    """Convert PIL Image to bytes for download"""
+    img_buffer = io.BytesIO()
+    image.save(img_buffer, format=format)
+    img_buffer.seek(0)
+    return img_buffer.getvalue()
+
+def generate_filename(prompt, model_name, timestamp=None):
+    """Generate a clean filename for the image"""
+    if timestamp is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Clean the prompt for filename
+    clean_prompt = "".join(c for c in prompt[:30] if c.isalnum() or c in (' ', '-', '_')).strip()
+    clean_prompt = clean_prompt.replace(' ', '_')
+    
+    # Clean model name
+    clean_model = model_name.replace(' ', '_').replace('.', '_')
+    
+    return f"{clean_model}_{timestamp}_{clean_prompt}.png"
 
 def main():
     """Main Streamlit application"""
@@ -127,6 +158,14 @@ def main():
             help="Directory where generated images will be saved"
         )
         
+        # Download preferences
+        st.subheader("📥 Download Settings")
+        download_format = st.selectbox(
+            "Image Format",
+            options=["PNG", "JPEG"],
+            help="Choose the format for downloaded images"
+        )
+        
         # Statistics
         st.subheader("📊 Statistics")
         st.metric("Images Generated", st.session_state.generation_count)
@@ -181,17 +220,49 @@ def main():
                         if success:
                             st.success(message)
                             
+                            # Create timestamp for this generation
+                            generation_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                            
                             # Add to session state
                             st.session_state.generated_images.insert(0, {
                                 'image': image,
                                 'prompt': prompt,
                                 'model': selected_model_name,
-                                'timestamp': generator.output_dir
+                                'timestamp': generation_timestamp,
+                                'format': download_format
                             })
                             st.session_state.generation_count += 1
                             
-                            # Display the generated image
+                            # Display the generated image with download option
                             st.image(image, caption=f"Generated: {prompt}", use_column_width=True)
+                            
+                            # Download section for the newly generated image
+                            st.markdown('<div class="download-section">', unsafe_allow_html=True)
+                            st.write("📥 **Download Options**")
+                            
+                            col_dl1, col_dl2 = st.columns(2)
+                            
+                            with col_dl1:
+                                # Generate filename
+                                filename = generate_filename(prompt, selected_model_name, generation_timestamp)
+                                
+                                # Convert image to bytes
+                                img_bytes = image_to_bytes(image, download_format)
+                                
+                                # Download button
+                                st.download_button(
+                                    label=f"⬇️ Download as {download_format}",
+                                    data=img_bytes,
+                                    file_name=filename,
+                                    mime=f"image/{download_format.lower()}",
+                                    use_container_width=True
+                                )
+                            
+                            with col_dl2:
+                                st.info(f"📁 **Filename:** {filename}")
+                                st.info(f"📏 **Size:** {image.size[0]}×{image.size[1]}")
+                            
+                            st.markdown('</div>', unsafe_allow_html=True)
                             
                         else:
                             st.error(message)
@@ -219,15 +290,51 @@ def main():
     
     # Display generated images history
     if st.session_state.generated_images:
-        st.subheader("🖼️ Generated Images")
+        st.subheader("🖼️ Generated Images History")
         
-        # Option to clear history
-        if st.button("🗑️ Clear History"):
-            st.session_state.generated_images = []
-            st.rerun()
+        # Controls for history section
+        col_hist1, col_hist2, col_hist3 = st.columns([2, 1, 1])
         
-        # Display images in a grid
-        cols_per_row = 3
+        with col_hist1:
+            st.write(f"**{len(st.session_state.generated_images)}** images in history")
+        
+        with col_hist2:
+            if st.button("📦 Download All", help="Download all images as ZIP"):
+                # Create a ZIP file with all images
+                import zipfile
+                import tempfile
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
+                    with zipfile.ZipFile(tmp_file, 'w') as zip_file:
+                        for idx, img_data in enumerate(st.session_state.generated_images):
+                            filename = generate_filename(
+                                img_data['prompt'], 
+                                img_data['model'], 
+                                img_data.get('timestamp', f'img_{idx}')
+                            )
+                            img_bytes = image_to_bytes(img_data['image'], img_data.get('format', 'PNG'))
+                            zip_file.writestr(filename, img_bytes)
+                    
+                    # Read the ZIP file
+                    tmp_file.seek(0)
+                    zip_bytes = tmp_file.read()
+                
+                # Offer ZIP download
+                st.download_button(
+                    label="⬇️ Download ZIP",
+                    data=zip_bytes,
+                    file_name=f"ai_generated_images_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                    mime="application/zip",
+                    use_container_width=True
+                )
+        
+        with col_hist3:
+            if st.button("🗑️ Clear History", use_container_width=True):
+                st.session_state.generated_images = []
+                st.rerun()
+        
+        # Display images in a grid with download buttons
+        cols_per_row = 2
         for i in range(0, len(st.session_state.generated_images), cols_per_row):
             cols = st.columns(cols_per_row)
             
@@ -236,9 +343,30 @@ def main():
                     img_data = st.session_state.generated_images[i + j]
                     
                     with col:
+                        # Display image
                         st.image(img_data['image'], use_column_width=True)
+                        
+                        # Image info
                         st.caption(f"**Model:** {img_data['model']}")
                         st.caption(f"**Prompt:** {img_data['prompt'][:50]}...")
+                        
+                        # Individual download button
+                        filename = generate_filename(
+                            img_data['prompt'], 
+                            img_data['model'], 
+                            img_data.get('timestamp', f'img_{i+j}')
+                        )
+                        img_format = img_data.get('format', 'PNG')
+                        img_bytes = image_to_bytes(img_data['image'], img_format)
+                        
+                        st.download_button(
+                            label=f"⬇️ Download",
+                            data=img_bytes,
+                            file_name=filename,
+                            mime=f"image/{img_format.lower()}",
+                            key=f"download_{i+j}",
+                            use_container_width=True
+                        )
     
     # Footer
     st.markdown("---")
@@ -246,6 +374,7 @@ def main():
     <div style='text-align: center; color: #666;'>
         <p>🎨 Built with Streamlit • Powered by Hugging Face 🤗</p>
         <p>Made for learning and experimentation 🚀</p>
+        <p>✨ Now with download capabilities! ✨</p>
     </div>
     """, unsafe_allow_html=True)
 
