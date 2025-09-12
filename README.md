@@ -1,25 +1,41 @@
 # 🎨 Text-to-Image Generator with Hugging Face
 
-A simple Python script that generates images from text prompts using Hugging Face's free inference API and various state-of-the-art models including FLUX.1 and Stable Diffusion.
+A powerful text-to-image generation application that creates stunning images from text prompts using Hugging Face's free inference API and various state-of-the-art models including FLUX.1 and Stable Diffusion.
+
+## 🌐 Try It Live!
+
+**🚀 [Launch Web App](https://text-to-image-hugging-face-dwu7nyvrg9q2qgkmroozt8.streamlit.app/)**
+
+Experience the magic of AI-powered image generation directly in your browser! No installation required - just enter your prompt and watch your ideas come to life.
+
+---
 
 ## ✨ Features
 
-- **Multiple AI Models**: Support for FLUX.1-schnell, FLUX.1-dev, Stable Diffusion variants, and OpenJourney
-- **Free to Use**: Utilizes Hugging Face's free inference API
-- **Interactive Interface**: Simple command-line interface with example prompts
-- **Automatic Saving**: Generated images are automatically saved with timestamps
-- **Model Switching**: Easy switching between different AI models
-- **License Information**: Clear indication of model licenses and usage rights
+- **🌐 Web Interface**: Beautiful, interactive Streamlit web application
+- **🤖 Multiple AI Models**: Support for FLUX.1-schnell, FLUX.1-dev, Stable Diffusion variants, and OpenJourney
+- **💰 Free to Use**: Utilizes Hugging Face's free inference API
+- **📱 Responsive Design**: Works on desktop, tablet, and mobile devices
+- **💾 Easy Download**: Generated images can be downloaded directly from the web interface
+- **🔄 Model Switching**: Easy switching between different AI models
+- **⚡ Fast Generation**: Optimized for quick image generation
+- **📋 Example Gallery**: Pre-built example prompts to get you started
+- **📄 License Information**: Clear indication of model licenses and usage rights
 
-## 🚀 Quick Start
+## 🚀 Quick Start Options
 
-### Prerequisites
+### Option 1: Use the Web App (Recommended)
+Simply visit **[our live deployment](https://text-to-image-hugging-face-dwu7nyvrg9q2qgkmroozt8.streamlit.app/)** and start generating images immediately!
 
-- Python 3.8 or higher
+### Option 2: Run Locally
+
+#### Prerequisites
+
+- Python 3.9 or higher (excluding 3.9.7)
 - Poetry (for dependency management)
 - Hugging Face account and API token
 
-### Installation
+#### Installation
 
 1. **Clone or download the repository**
    ```bash
@@ -27,13 +43,10 @@ A simple Python script that generates images from text prompts using Hugging Fac
    cd text-to-image-generator
    ```
 
-2. **Set up Poetry virtual environment**
+2. **Install dependencies with Poetry**
    ```bash
-   # Initialize poetry if not already done
-   poetry init
-   
    # Install dependencies
-   poetry add huggingface_hub python-dotenv pillow
+   poetry install
    
    # Activate the virtual environment
    poetry shell
@@ -51,7 +64,7 @@ A simple Python script that generates images from text prompts using Hugging Fac
    source .venv/bin/activate
    
    # Install dependencies
-   pip install huggingface_hub python-dotenv pillow
+   pip install -r requirements.txt
    ```
 
 4. **Get your Hugging Face API token**
@@ -65,48 +78,57 @@ A simple Python script that generates images from text prompts using Hugging Fac
    HUGGINGFACEHUB_API_TOKEN=your_actual_token_here
    ```
 
-6. **Run the script**
+6. **Run the Streamlit app**
    ```bash
-   python text_to_image.py
+   streamlit run app.py
    ```
 
 ## 📋 Dependencies
 
 The project uses the following Python packages:
 
+- `streamlit` - For the web interface
 - `huggingface_hub` - For accessing Hugging Face's inference API
 - `python-dotenv` - For loading environment variables from .env file
 - `pillow` - For image processing and saving
+- `langchain` & `langchain-community` - For advanced AI integrations
 
 ## 🎯 Usage
 
-### Basic Usage
+### Web App Usage
 
-1. Start the application:
+1. **Visit the live app**: [https://text-to-image-hugging-face-dwu7nyvrg9q2qgkmroozt8.streamlit.app/](https://text-to-image-hugging-face-dwu7nyvrg9q2qgkmroozt8.streamlit.app/)
+
+2. **Choose your model**: Select from the dropdown menu in the sidebar
+
+3. **Enter your prompt**: Type your image description in the text input field
+
+4. **Generate**: Click the "Generate Image" button
+
+5. **Download**: Use the download button to save your generated image
+
+### Local App Usage
+
+1. Start the Streamlit application:
    ```bash
-   poetry run python text_to_image.py
+   streamlit run app.py
    ```
 
-2. Enter a text prompt when asked:
-   ```
-   Enter prompt (or command): a red sports car on a mountain road
-   ```
+2. Open your browser to the displayed URL (usually `http://localhost:8501`)
 
-3. The generated image will be saved automatically with a timestamp.
-
-### Available Commands
-
-- **`models`** - View and switch between available AI models
-- **`examples`** - Browse and select from predefined example prompts
-- **`exit`** - Quit the application
+3. Use the interface to generate images with custom prompts
 
 ### Example Prompts
 
-- "a serene mountain landscape at sunset"
-- "a futuristic robot in a cyberpunk city"
-- "a magical forest with glowing mushrooms"
-- "a cozy coffee shop interior with warm lighting"
-- "an astronaut floating in space with Earth in background"
+Try these creative prompts to get started:
+
+- "a serene mountain landscape at sunset with purple clouds"
+- "a futuristic robot in a neon-lit cyberpunk city"
+- "a magical enchanted forest with glowing mushrooms and fireflies"
+- "a cozy coffee shop interior with warm lighting and books"
+- "an astronaut floating in space with Earth and stars in background"
+- "a majestic dragon soaring over ancient castle ruins"
+- "a vibrant underwater coral reef scene with tropical fish"
 
 ## 🤖 Available Models
 
@@ -114,13 +136,13 @@ The project uses the following Python packages:
 
 1. **FLUX.1-schnell** ✅ **Recommended**
    - License: Apache 2.0 (fully free for all uses)
-   - Speed: Fast generation
+   - Speed: Fast generation (~10-20 seconds)
    - Quality: High quality results
    - Best for: General use, commercial projects
 
 2. **FLUX.1-dev** ⚠️ **Limited Use**
    - License: Non-commercial license
-   - Speed: Slower but higher quality
+   - Speed: Slower but higher quality (~30-60 seconds)
    - Quality: Premium results
    - Best for: Personal projects, research
 
@@ -149,20 +171,41 @@ The project uses the following Python packages:
 
 ```
 text-to-image-generator/
-├── text_to_image.py          # Main application script
-├── .env                      # Environment variables (create this)
-├── .env.example             # Environment variables template
-├── README.md                # This file
-├── pyproject.toml           # Poetry configuration
-├── .gitignore              # Git ignore file
-└── generated_images/        # Folder for generated images (created automatically)
+├── app.py                   # Main Streamlit application
+├── text_to_image.py         # Core image generation logic
+├── .env                     # Environment variables (create this for local use)
+├── .env.example            # Environment variables template
+├── README.md               # This file
+├── pyproject.toml          # Poetry configuration
+├── requirements.txt        # Pip dependencies
+├── .gitignore             # Git ignore file
+└── generated_images/       # Folder for generated images (created automatically)
+```
+
+## 🌐 Deployment
+
+This app is deployed on **Streamlit Cloud** and automatically updates when changes are pushed to the main branch.
+
+### Deploy Your Own Version
+
+1. Fork this repository
+2. Create a Streamlit Cloud account at [share.streamlit.io](https://share.streamlit.io)
+3. Connect your GitHub repository
+4. Add your `HUGGINGFACEHUB_API_TOKEN` to Streamlit Cloud secrets
+5. Deploy!
+
+### Local Development
+
+For local development with hot reload:
+```bash
+streamlit run app.py --server.runOnSave true
 ```
 
 ## ⚙️ Configuration
 
 ### Environment Variables
 
-Create a `.env` file with:
+For local deployment, create a `.env` file with:
 
 ```env
 # Required: Your Hugging Face API token
@@ -170,50 +213,27 @@ HUGGINGFACEHUB_API_TOKEN=hf_your_token_here
 
 # Optional: Default model (if not specified, uses FLUX.1-schnell)
 DEFAULT_MODEL=black-forest-labs/FLUX.1-schnell
-
-# Optional: Output directory for images (defaults to current directory)
-OUTPUT_DIR=./generated_images
 ```
 
-### Poetry Configuration
+### Streamlit Cloud Secrets
 
-Your `pyproject.toml` configuration:
+For deployment on Streamlit Cloud, add your secrets in the app settings:
 
 ```toml
-[project]
-name = "text-to-image-generator"
-version = "0.1.0"
-description = "AI-powered text-to-image generation using Hugging Face models"
-authors = [
-    {name = "sai venkat", email = "saisam346@gmail.com"}
-]
-readme = "README.md"
-requires-python = ">=3.13,<4.0"
-dependencies = [
-    "langchain>=0.3.27,<0.4.0",
-    "langchain-community>=0.3.29,<0.4.0",
-    "pillow>=11.3.0,<12.0.0",
-    "huggingface-hub>=0.34.4,<0.35.0",
-    "python-dotenv>=1.1.1,<2.0.0"
-]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+HUGGINGFACEHUB_API_TOKEN = "hf_your_token_here"
 ```
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-1. **"HUGGINGFACEHUB_API_TOKEN not found!"**
-   - Make sure you created the `.env` file
-   - Check that your token is correctly copied
-   - Ensure the `.env` file is in the same directory as the script
+1. **"Please configure your Hugging Face API token"**
+   - For local use: Create a `.env` file with your token
+   - For deployed app: The token is configured on our end
 
 2. **"Error generating image: Model not found"**
    - Some models might be temporarily unavailable
-   - Try switching to a different model using the `models` command
+   - Try switching to a different model
    - FLUX.1-schnell is usually the most reliable
 
 3. **"Rate limit exceeded"**
@@ -224,54 +244,81 @@ build-backend = "poetry.core.masonry.api"
 4. **"Generation takes too long"**
    - Free inference API can be slow during peak hours
    - FLUX.1-schnell is typically faster than other models
-   - Be patient, especially on first use (models need to "warm up")
+   - Be patient, especially during first use (models need to "warm up")
+
+5. **App not loading/crashing**
+   - Try refreshing the page
+   - Check if you have a stable internet connection
+   - Clear your browser cache
 
 ### Performance Tips
 
 - **Use FLUX.1-schnell** for fastest results
-- **Keep prompts concise** but descriptive
-- **Avoid very complex prompts** that might confuse the model
-- **Try different models** if one isn't working well
+- **Keep prompts descriptive** but not overly complex
+- **Be specific** about what you want to see
+- **Try different models** if one isn't producing desired results
+- **Use the example prompts** as inspiration
+
+## 📱 Mobile Experience
+
+The web app is fully responsive and works great on mobile devices:
+- Touch-friendly interface
+- Optimized image display
+- Easy prompt entry
+- Quick model switching
 
 ## 📄 License Information
 
-### Script License
+### Application License
 This project is open source. Feel free to modify and distribute.
 
 ### Model Licenses
-- **FLUX.1-schnell**: Apache 2.0 License (fully free)
+- **FLUX.1-schnell**: Apache 2.0 License (fully free for all uses)
 - **FLUX.1-dev**: Non-commercial license (personal use only)
 - **Stable Diffusion models**: CreativeML Open RAIL-M License
 - **OpenJourney**: CreativeML Open RAIL-M License
 
 Always check the specific model's license on Hugging Face before commercial use.
 
+## 🚀 What's Next?
+
+Planned features for future releases:
+- **Image-to-image generation** - Transform existing images with prompts
+- **Style transfer** - Apply artistic styles to generated images
+- **Batch generation** - Generate multiple variations at once
+- **History** - Save and revisit your favorite generations
+- **Advanced settings** - Control generation parameters
+- **Community gallery** - Share your best creations
+
 ## 🤝 Contributing
 
-Feel free to:
-- Report bugs
-- Suggest new features
-- Add support for more models
-- Improve documentation
-- Submit pull requests
+We welcome contributions! Feel free to:
+- 🐛 Report bugs
+- 💡 Suggest new features
+- 🤖 Add support for more models
+- 📚 Improve documentation
+- 🔧 Submit pull requests
 
-## 📞 Support
+## 📞 Support & Feedback
 
-If you encounter issues:
+If you encounter issues or have suggestions:
 
-1. Check the troubleshooting section above
-2. Verify your Hugging Face token is valid
-3. Try different models
-4. Check [Hugging Face Status](https://status.huggingface.co/) for service issues
+1. Try the troubleshooting section above
+2. Check [Hugging Face Status](https://status.huggingface.co/) for service issues
+3. Open an issue on GitHub
+4. Contact the developers
 
 ## 🔗 Useful Links
 
+- **🌐 [Live Web App](https://text-to-image-hugging-face-dwu7nyvrg9q2qgkmroozt8.streamlit.app/)**
 - [Hugging Face Hub](https://huggingface.co/)
 - [Get API Token](https://huggingface.co/settings/tokens)
 - [FLUX.1 Models](https://huggingface.co/black-forest-labs)
 - [Stable Diffusion Models](https://huggingface.co/runwayml)
-- [Poetry Documentation](https://python-poetry.org/docs/)
+- [Streamlit Documentation](https://docs.streamlit.io/)
 
 ---
 
-**Happy generating! 🎨✨**
+**🎨 Start creating amazing AI-generated images today! ✨**
+
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://text-to-image-hugging-face-dwu7nyvrg9q2qgkmroozt8.streamlit.app/)
